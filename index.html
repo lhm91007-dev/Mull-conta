@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Contabilidad Pro Web</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-soft: #111827;
+    --accent: #38bdf8;
+    --accent-soft: #0ea5e9;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --warning: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 1rem 2rem;
+    background: rgba(15,23,42,0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .6rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  header h1 { margin: 0; font-size: 1.3rem; letter-spacing: .04em; display: flex; align-items: center; gap: .5rem; }
+  header h1 span.logo {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: conic-gradient(from 180deg, #38bdf8, #22c55e, #a855f7, #38bdf8);
+    box-shadow: 0 0 18px rgba(56,189,248,.7);
+  }
+  nav { display: flex; gap: .5rem; flex-wrap: wrap; }
+  nav button {
+    border: none; padding: .45rem .9rem; border-radius: 999px;
+    background: #020617; color: var(--muted); cursor: pointer; font-size: .85rem;
+    display: flex; align-items: center; gap: .35rem;
+    border: 1px solid #1f2937; transition: all .15s ease;
+  }
+  nav button.active { background: linear-gradient(90deg, var(--accent), var(--accent-soft)); color: #0b1120; border-color: transparent; box-shadow: 0 0 16px rgba(56,189,248,.6); }
+  nav button:hover:not(.active) { background: #030712; color: var(--text); }
+  main { flex: 1; padding: 1.5rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+  .grid { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1.2fr); gap: 1rem; }
+  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0,1fr); } form { grid-template-columns: minmax(0,1fr) !important; } }
+  .card {
+    background: rgba(15,23,42,0.9); border-radius: 1rem; padding: 1rem 1.1rem;
+    border: 1px solid #1f2937; box-shadow: 0 18px 40px rgba(15,23,42,.9);
+    position: relative; overflow: hidden; margin-bottom: 1rem;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: -40%;
+    background: radial-gradient(circle at top left, rgba(56,189,248,.12), transparent 55%);
+    opacity: .9; pointer-events: none;
+  }
+  .card h2 { margin: 0 0 .6rem; font-size: 1rem; display: flex; align-items: center; gap: .4rem; justify-content: space-between; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: .25rem; padding: .15rem .5rem; border-radius: 999px; background: #020617; border: 1px solid #1f2937; font-size: .7rem; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .6rem; margin-top: .4rem; }
+  @media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
+  .stat { background: #020617; border-radius: .8rem; padding: .6rem .7rem; border: 1px solid #1f2937; }
+  .stat-label { font-size: .7rem; color: var(--muted); }
+  .stat-value { margin-top: .15rem; font-size: 1.05rem; font-weight: 600; }
+  .stat-tag { margin-top: .2rem; font-size: .7rem; color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; margin-top: .5rem; font-size: .8rem; display: block; overflow-x: auto; white-space: nowrap; }
+  th, td { padding: .45rem .5rem; border-bottom: 1px solid #1f2937; text-align: left; }
+  th { color: var(--muted); font-weight: 500; background: #020617; position: sticky; top: 0; z-index: 1; }
+  tbody tr:hover { background: rgba(15,23,42,.7); }
+  .tag { display: inline-flex; padding: .1rem .5rem; border-radius: 999px; font-size: .7rem; border: 1px solid #1f2937; }
+  .tag-paid { color: var(--success); border-color: var(--success); }
+  .tag-open { color: var(--accent); border-color: var(--accent); }
+  .tag-overdue { color: var(--danger); border-color: var(--danger); }
+  .btn {
+    border: none; border-radius: 999px; padding: .35rem .8rem; font-size: .78rem; cursor: pointer;
+    display: inline-flex; align-items: center; gap: .3rem; background: #020617; color: var(--text);
+    border: 1px solid #1f2937; transition: all .15s ease;
+  }
+  .btn-primary { background: linear-gradient(90deg, var(--accent), var(--accent-soft)); color: #0b1120; border-color: transparent; box-shadow: 0 0 14px rgba(56,189,248,.7); }
+  .btn-danger { background: #020617; color: var(--danger); border-color: var(--danger); }
+  .btn-edit { background: #020617; color: var(--warning); border-color: var(--warning); }
+  .btn-sm { padding: .2rem .55rem; font-size: .7rem; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(15,23,42,.9); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+  form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .6rem .8rem; margin-top: .5rem; }
+  form .full { grid-column: 1 / -1; }
+  label { font-size: .75rem; color: var(--muted); display: block; margin-bottom: .15rem; }
+  input, select, textarea {
+    width: 100%; padding: .4rem .5rem; border-radius: .5rem; border: 1px solid #1f2937;
+    background: #020617; color: var(--text); font-size: .8rem; font-family: inherit;
+  }
+  textarea { min-height: 60px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); box-shadow: 0 0 0 1px rgba(56,189,248,.4); }
+  .field-error { border-color: var(--danger) !important; }
+  .error-text { color: var(--danger); font-size: .7rem; margin-top: .15rem; display: none; }
+  .section-actions { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: .4rem; flex-wrap: wrap; }
+  .section-actions-right { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .toolbar { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+  .toolbar input, .toolbar select { width: auto; min-width: 140px; }
+  .small { font-size: .75rem; color: var(--muted); }
+  footer { padding: .6rem 1.5rem; font-size: .7rem; color: var(--muted); text-align: center; border-top: 1px solid #1f2937; background: rgba(15,23,42,0.9); }
+  .hidden { display: none !important; }
+  .badge { display: inline-flex; align-items: center; gap: .25rem; padding: .15rem .45rem; border-radius: 999px; background: #020617; border: 1px solid #1f2937; font-size: .7rem; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+  .modal.open { display: flex; }
+  .modal-content { background: #020617; border: 1px solid #1f2937; border-radius: 1rem; padding: 1.5rem; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgb(0 0 0); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1rem; }
+  .toast-container { position: fixed; bottom: 1rem; right: 1rem; display: flex; flex-direction: column; gap: .5rem; z-index: 2000; max-width: 320px; }
+  .toast { background: #020617; border: 1px solid #1f2937; border-left: 4px solid var(--accent); padding: .6rem .8rem; border-radius: .6rem; font-size: .8rem; box-shadow: 0 10px 25px rgba(0,0,0,.5); animation: slidein .2s ease; }
+  .toast.success { border-left-color: var(--success); }
+  .toast.error { border-left-color: var(--danger); }
+  @keyframes slidein { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  #chart-canvas { width: 100%; height: 160px; margin-top: .6rem; }
+  .empty-row td { text-align: center; color: var(--muted); padding: 1rem; }
+  .totals-row td { font-weight: 600; border-top: 2px solid #1f2937; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="logo"></span> Contabilidad Pro Web</h1>
+  <nav>
+    <button data-view="dashboard" class="active">📊 Panel</button>
+    <button data-view="clients">👥 Clientes</button>
+    <button data-view="invoices">🧾 Facturas</button>
+    <button data-view="expenses">💸 Gastos</button>
+    <button data-view="reports">📈 Reportes</button>
+    <button data-view="settings">⚙️ Configuración</button>
+  </nav>
+</header>
+
+<main>
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="grid">
+    <div class="card">
+      <h2>Resumen financiero <span class="pill">Tiempo real</span></h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Facturado (30 días)</div>
+          <div class="stat-value" id="stat-income">₡0</div>
+          <div class="stat-tag">Todas las facturas</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Cobrado (30 días)</div>
+          <div class="stat-value" id="stat-collected">₡0</div>
+          <div class="stat-tag">Solo pagadas</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Gastos (30 días)</div>
+          <div class="stat-value" id="stat-expenses">₡0</div>
+          <div class="stat-tag">Registrados</div>
+        </div>
+      </div>
+      <div class="stats" style="margin-top:.6rem;">
+        <div class="stat" style="grid-column: 1 / -1;">
+          <div class="stat-label">Resultado neto (cobrado - gastos)</div>
+          <div class="stat-value" id="stat-result">₡0</div>
+          <div class="stat-tag" id="stat-result-tag">Equilibrado</div>
+        </div>
+      </div>
+      <canvas id="chart-canvas" width="600" height="160"></canvas>
+      <div class="section-actions" style="margin-top:.8rem;">
+        <div class="badge">
+          🔁 Todo se guarda automáticamente
+        </div>
+        <div class="section-actions-right">
+          <button class="btn btn-primary" id="btn-quick-invoice">+ Factura rápida</button>
+          <button class="btn" id="btn-quick-expense">+ Gasto rápido</button>
+        </div>
+      </div>
+      <p class="small" style="margin-top:.6rem;">
+        Los datos se guardan en este navegador usando <code>localStorage</code>. Usa la sección Configuración para respaldar o restaurar tu información.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Alertas y estado</h2>
+      <ul class="small" id="alerts-list" style="margin:.2rem 0 0; padding-left:1rem;"></ul>
+      <h2 style="margin-top:1rem;">Resumen rápido</h2>
+      <ul class="small" id="quick-summary" style="margin:.2rem 0 0; padding-left:1rem;"></ul>
+    </div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section id="view-clients" class="card hidden">
+    <h2>Clientes</h2>
+    <div class="section-actions">
+      <span class="small">Administra tus clientes para vincularlos a facturas y reportes.</span>
+      <button class="btn btn-primary" id="btn-add-client">+ Nuevo cliente</button>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="client-search" placeholder="Buscar cliente por nombre, id o correo..." />
+    </div>
+    <form id="form-client" class="hidden">
+      <input type="hidden" id="client-edit-id" />
+      <div class="full">
+        <label>Nombre / Razón social *</label>
+        <input type="text" id="client-name" required />
+        <div class="error-text" id="err-client-name">El nombre es obligatorio.</div>
+      </div>
+      <div>
+        <label>Identificación (Cédula / N°)</label>
+        <input type="text" id="client-id-field" />
+      </div>
+      <div>
+        <label>Teléfono</label>
+        <input type="text" id="client-phone" />
+      </div>
+      <div class="full">
+        <label>Correo electrónico</label>
+        <input type="email" id="client-email" />
+        <div class="error-text" id="err-client-email">Correo electrónico no válido.</div>
+      </div>
+      <div class="full">
+        <label>Notas</label>
+        <textarea id="client-notes"></textarea>
+      </div>
+      <div class="full" style="display:flex; justify-content:flex-end; gap:.4rem;">
+        <button type="button" class="btn" id="btn-cancel-client">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-client">Guardar cliente</button>
+      </div>
+    </form>
+
+    <table id="table-clients">
+      <thead>
+        <tr><th>Nombre</th><th>Identificación</th><th>Teléfono</th><th>Correo</th><th>Acciones</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- FACTURAS -->
+  <section id="view-invoices" class="card hidden">
+    <h2>Facturas</h2>
+    <div class="section-actions">
+      <span class="small">Registra ingresos, controla estado con IVA calculado automáticamente.</span>
+      <button class="btn btn-primary" id="btn-add-invoice">+ Nueva factura</button>
+    </div>
+    <div class="toolbar">
+      <select id="invoice-filter-status">
+        <option value="">Todos los estados</option>
+        <option value="open">Pendiente</option>
+        <option value="paid">Pagada</option>
+        <option value="overdue">Vencida</option>
+      </select>
+      <input type="text" id="invoice-search" placeholder="Buscar por cliente o descripción..." />
+    </div>
+
+    <form id="form-invoice" class="hidden">
+      <input type="hidden" id="invoice-edit-id" />
+      <div>
+        <label>Cliente *</label>
+        <select id="invoice-client" required></select>
+        <div class="error-text" id="err-invoice-client">Selecciona un cliente (crea uno primero si no hay ninguno).</div>
+      </div>
+      <div>
+        <label>Fecha de emisión *</label>
+        <input type="date" id="invoice-date" required />
+      </div>
+      <div>
+        <label>Fecha de vencimiento</label>
+        <input type="date" id="invoice-due-date" />
+      </div>
+      <div>
+        <label>Estado</label>
+        <select id="invoice-status">
+          <option value="open">Pendiente</option>
+          <option value="paid">Pagada</option>
+          <option value="overdue">Vencida</option>
+        </select>
+      </div>
+      <div>
+        <label>Subtotal (₡) *</label>
+        <input type="number" id="invoice-amount" min="0" step="0.01" required />
+        <div class="error-text" id="err-invoice-amount">Ingresa un monto válido mayor a 0.</div>
+      </div>
+      <div>
+        <label>IVA (%)</label>
+        <input type="number" id="invoice-tax" min="0" step="0.01" value="13" />
+      </div>
+      <div class="full small" id="invoice-total-preview">Total: ₡0.00</div>
+      <div class="full">
+        <label>Descripción</label>
+        <textarea id="invoice-desc"></textarea>
+      </div>
+      <div class="full" style="display:flex; justify-content:flex-end; gap:.4rem;">
+        <button type="button" class="btn" id="btn-cancel-invoice">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-invoice">Guardar factura</button>
+      </div>
+    </form>
+
+    <table id="table-invoices">
+      <thead>
+        <tr><th>N°</th><th>Cliente</th><th>Fecha</th><th>Vence</th><th>Subtotal</th><th>IVA</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- GASTOS -->
+  <section id="view-expenses" class="card hidden">
+    <h2>Gastos</h2>
+    <div class="section-actions">
+      <span class="small">Control de egresos por categoría y proveedor.</span>
+      <button class="btn btn-primary" id="btn-add-expense">+ Nuevo gasto</button>
+    </div>
+    <div class="toolbar">
+      <select id="expense-filter-category">
+        <option value="">Todas las categorías</option>
+      </select>
+      <input type="text" id="expense-search" placeholder="Buscar por proveedor o descripción..." />
+    </div>
+
+    <form id="form-expense" class="hidden">
+      <input type="hidden" id="expense-edit-id" />
+      <div>
+        <label>Fecha *</label>
+        <input type="date" id="expense-date" required />
+      </div>
+      <div>
+        <label>Monto (₡) *</label>
+        <input type="number" id="expense-amount" min="0" step="0.01" required />
+        <div class="error-text" id="err-expense-amount">Ingresa un monto válido mayor a 0.</div>
+      </div>
+      <div>
+        <label>Categoría</label>
+        <input type="text" id="expense-category" list="expense-category-list" placeholder="Servicios, alquiler, etc." />
+        <datalist id="expense-category-list">
+          <option value="Alquiler"></option>
+          <option value="Servicios públicos"></option>
+          <option value="Salarios"></option>
+          <option value="Suministros de oficina"></option>
+          <option value="Transporte"></option>
+          <option value="Marketing"></option>
+          <option value="Impuestos"></option>
+        </datalist>
+      </div>
+      <div>
+        <label>Proveedor</label>
+        <input type="text" id="expense-vendor" />
+      </div>
+      <div class="full">
+        <label>Descripción</label>
+        <textarea id="expense-desc"></textarea>
+      </div>
+      <div class="full" style="display:flex; justify-content:flex-end; gap:.4rem;">
+        <button type="button" class="btn" id="btn-cancel-expense">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-expense">Guardar gasto</button>
+      </div>
+    </form>
+
+    <table id="table-expenses">
+      <thead>
+        <tr><th>Fecha</th><th>Monto</th><th>Categoría</th><th>Proveedor</th><th>Acciones</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <!-- REPORTES -->
+  <section id="view-reports" class="grid hidden">
+    <div class="card">
+      <h2>Reporte de resultados</h2>
+      <p class="small">Resumen de ingresos vs gastos por rango de fechas.</p>
+      <form id="form-report">
+        <div>
+          <label>Desde</label>
+          <input type="date" id="report-from" />
+        </div>
+        <div>
+          <label>Hasta</label>
+          <input type="date" id="report-to" />
+        </div>
+        <div class="full" style="display:flex; justify-content:flex-end; gap:.4rem;">
+          <button type="button" class="btn" id="btn-report-clear">Limpiar</button>
+          <button type="submit" class="btn btn-primary">Generar reporte</button>
+        </div>
+      </form>
+      <div style="margin-top:.7rem;">
+        <div class="stats">
+          <div class="stat"><div class="stat-label">Ingresos (facturado)</div><div class="stat-value" id="report-income">₡0</div></div>
+          <div class="stat"><div class="stat-label">Gastos</div><div class="stat-value" id="report-expenses">₡0</div></div>
+          <div class="stat"><div class="stat-label">Resultado</div><div class="stat-value" id="report-result">₡0</div><div class="stat-tag" id="report-result-tag">Equilibrado</div></div>
+        </div>
+      </div>
+      <h2 style="margin-top:1rem;">Gastos por categoría</h2>
+      <table id="table-report-categories">
+        <thead><tr><th>Categoría</th><th>Total</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="section-actions-right" style="margin-top:.7rem;">
+        <button class="btn" id="btn-export-csv">Exportar CSV del reporte</button>
+        <button class="btn" id="btn-print-report">Imprimir</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Respaldo de datos</h2>
+      <p class="small">Exporta todos tus datos (clientes, facturas y gastos) en formato JSON.</p>
+      <button class="btn btn-primary" id="btn-export-json">Exportar respaldo JSON</button>
+      <pre id="export-output" class="small" style="margin-top:.6rem; max-height:200px; overflow:auto; background:#020617; padding:.5rem; border-radius:.5rem;"></pre>
+    </div>
+  </section>
+
+  <!-- CONFIGURACIÓN -->
+  <section id="view-settings" class="card hidden">
+    <h2>Configuración</h2>
+    <p class="small">Opciones generales de la aplicación.</p>
+    <div style="margin-top:.6rem; display:flex; flex-direction:column; gap:.6rem; max-width:420px;">
+      <div>
+        <label>Nombre del negocio</label>
+        <input type="text" id="setting-business-name" placeholder="Mulltidigitalcr" />
+      </div>
+      <div>
+        <label>Moneda (símbolo)</label>
+        <input type="text" id="setting-currency" placeholder="₡" maxlength="3" />
+      </div>
+      <button class="btn btn-primary" id="btn-save-settings" style="width:fit-content;">Guardar configuración</button>
+      <hr style="border-color:#1f2937; width:100%;" />
+      <div>
+        <label>Restaurar respaldo (archivo .json)</label>
+        <input type="file" id="import-file" accept="application/json" />
+      </div>
+      <button class="btn btn-danger" id="btn-clear-all">🧨 Borrar todos los datos locales</button>
+      <span class="small">Esto elimina clientes, facturas y gastos guardados en <code>localStorage</code>. Esta acción no se puede deshacer.</span>
+    </div>
+  </section>
+</main>
+
+<footer>Contabilidad Pro Web · Listo para Mulltidigitalcr</footer>
+
+<div class="modal" id="confirm-modal">
+  <div class="modal-content">
+    <h2 style="margin:0 0 .5rem;">Confirmar acción</h2>
+    <p class="small" id="confirm-modal-message">¿Estás seguro?</p>
+    <div class="modal-actions">
+      <button class="btn" id="confirm-modal-cancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-modal-accept">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+(function() {
+  "use strict";
+  const STORAGE_KEY = "contabilidad_pro_web_v2";
+
+  const state = {
+    clients: [],
+    invoices: [],
+    expenses: [],
+    settings: { businessName: "Mulltidigitalcr", currency: "₡" },
+    invoiceCounter: 1
+  };
+
+  let editingClientId = null;
+  let editingInvoiceId = null;
+  let editingExpenseId = null;
+  let confirmCallback = null;
+
+  // ---------- Persistence ----------
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        ["clients", "invoices", "expenses"].forEach(k => {
+          if (Array.isArray(parsed[k])) state[k] = parsed[k];
+        });
+        if (parsed.settings) state.settings = Object.assign(state.settings, parsed.settings);
+        if (typeof parsed.invoiceCounter === "number") state.invoiceCounter = parsed.invoiceCounter;
+      }
+    } catch (e) {
+      console.error("Error cargando estado", e);
+      toast("No se pudo cargar la información guardada.", "error");
+    }
+  }
+
+  function saveState(render) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Error guardando estado", e);
+      toast("No se pudo guardar la información (almacenamiento lleno o bloqueado).", "error");
+    }
+    if (render !== false) renderAll();
+  }
+
+  function genId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+  }
+
+  // ---------- Helpers ----------
+  function currencySymbol() { return state.settings.currency || "₡"; }
+
+  function formatCurrency(v) {
+    const n = Number(v) || 0;
+    return currencySymbol() + n.toLocaleString("es-CR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function todayISO() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function toast(message, type) {
+    const container = document.getElementById("toast-container");
+    const div = document.createElement("div");
+    div.className = "toast" + (type ? " " + type : "");
+    div.textContent = message;
+    container.appendChild(div);
+    setTimeout(() => { div.remove(); }, 3500);
+  }
+
+  function openConfirm(message, onAccept) {
+    document.getElementById("confirm-modal-message").textContent = message;
+    confirmCallback = onAccept;
+    document.getElementById("confirm-modal").classList.add("open");
+  }
+  function closeConfirm() {
+    document.getElementById("confirm-modal").classList.remove("open");
+    confirmCallback = null;
+  }
+  document.getElementById("confirm-modal-cancel").addEventListener("click", closeConfirm);
+  document.getElementById("confirm-modal-accept").addEventListener("click", () => {
+    if (typeof confirmCallback === "function") confirmCallback();
+    closeConfirm();
+  });
+
+  function invoiceTotal(inv) {
+    const subtotal = Number(inv.amount || 0);
+    const tax = Number(inv.tax || 0);
+    return subtotal + subtotal * (tax / 100);
+  }
+
+  function isOverdue(inv) {
+    if (inv.status !== "open" || !inv.dueDate) return false;
+    return inv.dueDate < todayISO();
+  }
+
+  function effectiveStatus(inv) {
+    if (isOverdue(inv)) return "overdue";
+    return inv.status;
+  }
+
+  function clientName(id) {
+    const c = state.clients.find(c => c.id === id);
+    return c ? c.name : "(cliente eliminado)";
+  }
+
+  // ---------- View switching ----------
+  function switchView(view) {
+    document.querySelectorAll("nav button").forEach(btn => btn.classList.toggle("active", btn.dataset.view === view));
+    document.querySelectorAll("main > section").forEach(sec => sec.classList.toggle("hidden", sec.id !== "view-" + view));
+    if (view === "invoices") populateClientSelect();
+    if (view === "expenses") populateCategoryFilter();
+  }
+  document.querySelectorAll("nav button").forEach(btn => {
+    btn.addEventListener("click", () => switchView(btn.dataset.view));
+  });
+
+  // ==================== RENDER ====================
+  function renderAll() {
+    renderDashboard();
+    renderClients();
+    renderInvoices();
+    renderExpenses();
+    populateClientSelect();
+    populateCategoryFilter();
+  }
+
+  function inRangeDays(dateStr, days) {
+    const now = new Date();
+    const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    return new Date(dateStr) >= from;
+  }
+
+  function renderDashboard() {
+    const income = state.invoices.filter(i => inRangeDays(i.date, 30)).reduce((s, i) => s + invoiceTotal(i), 0);
+    const collected = state.invoices.filter(i => i.status === "paid" && inRangeDays(i.date, 30)).reduce((s, i) => s + invoiceTotal(i), 0);
+    const expenses = state.expenses.filter(e => inRangeDays(e.date, 30)).reduce((s, e) => s + Number(e.amount || 0), 0);
+    const result = collected - expenses;
+
+    document.getElementById("stat-income").textContent = formatCurrency(income);
+    document.getElementById("stat-collected").textContent = formatCurrency(collected);
+    document.getElementById("stat-expenses").textContent = formatCurrency(expenses);
+    document.getElementById("stat-result").textContent = formatCurrency(result);
+
+    const tag = document.getElementById("stat-result-tag");
+    if (result > 0) { tag.textContent = "Ganancia"; tag.style.color = "var(--success)"; }
+    else if (result < 0) { tag.textContent = "Pérdida"; tag.style.color = "var(--danger)"; }
+    else { tag.textContent = "Equilibrado"; tag.style.color = "var(--accent)"; }
+
+    const alerts = [];
+    const overdueCount = state.invoices.filter(i => isOverdue(i)).length;
+    if (overdueCount) alerts.push("⚠️ Tienes " + overdueCount + " factura(s) vencida(s).");
+    const openCount = state.invoices.filter(i => i.status === "open" && !isOverdue(i)).length;
+    if (openCount) alerts.push("⏳ " + openCount + " factura(s) pendiente(s) de pago.");
+    if (!state.clients.length) alerts.push("ℹ️ Aún no has registrado clientes.");
+    if (!alerts.length) alerts.push("✅ Sin alertas críticas. Todo en orden.");
+    const ul = document.getElementById("alerts-list");
+    ul.innerHTML = "";
+    alerts.forEach(a => { const li = document.createElement("li"); li.textContent = a; ul.appendChild(li); });
+
+    const summary = document.getElementById("quick-summary");
+    summary.innerHTML = "";
+    [
+      "👥 Clientes registrados: " + state.clients.length,
+      "🧾 Facturas totales: " + state.invoices.length,
+      "💸 Gastos totales: " + state.expenses.length
+    ].forEach(t => { const li = document.createElement("li"); li.textContent = t; summary.appendChild(li); });
+
+    drawChart();
+  }
+
+  function drawChart() {
+    const canvas = document.getElementById("chart-canvas");
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ key: d.getFullYear() + "-" + (d.getMonth() + 1), label: d.toLocaleDateString("es-CR", { month: "short" }), income: 0, expense: 0 });
+    }
+    function monthKey(dateStr) {
+      const d = new Date(dateStr);
+      return d.getFullYear() + "-" + (d.getMonth() + 1);
+    }
+    state.invoices.forEach(inv => {
+      const m = months.find(m => m.key === monthKey(inv.date));
+      if (m) m.income += invoiceTotal(inv);
+    });
+    state.expenses.forEach(e => {
+      const m = months.find(m => m.key === monthKey(e.date));
+      if (m) m.expense += Number(e.amount || 0);
+    });
+
+    const max = Math.max(1, ...months.map(m => Math.max(m.income, m.expense)));
+    const groupW = w / months.length;
+    const barW = groupW * 0.32;
+    const padBottom = 24;
+
+    ctx.font = "10px system-ui";
+    ctx.fillStyle = "#9ca3af";
+    months.forEach((m, idx) => {
+      const groupX = idx * groupW;
+      const incomeH = (m.income / max) * (h - padBottom - 10);
+      const expenseH = (m.expense / max) * (h - padBottom - 10);
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillRect(groupX + groupW * 0.15, h - padBottom - incomeH, barW, incomeH);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(groupX + groupW * 0.53, h - padBottom - expenseH, barW, expenseH);
+      ctx.fillStyle = "#9ca3af";
+      ctx.fillText(m.label, groupX + groupW * 0.28, h - 8);
+    });
+    ctx.fillStyle = "#38bdf8"; ctx.fillRect(0, h - 4, 8, 8);
+    ctx.fillStyle = "#9ca3af"; ctx.fillText("Ingresos", 12, h - 0);
+    ctx.fillStyle = "#ef4444"; ctx.fillRect(70, h - 4, 8, 8);
+    ctx.fillStyle = "#9ca3af"; ctx.fillText("Gastos", 82, h - 0);
+  }
+
+  // ---------- Clients ----------
+  function renderClients() {
+    const tbody = document.querySelector("#table-clients tbody");
+    const term = (document.getElementById("client-search").value || "").toLowerCase();
+    tbody.innerHTML = "";
+    const filtered = state.clients.filter(c =>
+      !term || (c.name || "").toLowerCase().includes(term) ||
+      (c.idNumber || "").toLowerCase().includes(term) ||
+      (c.email || "").toLowerCase().includes(term)
+    );
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No hay clientes que coincidan.</td></tr>';
+      return;
+    }
+    filtered.forEach(c => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(c.name)}</td>
+        <td>${escapeHtml(c.idNumber)}</td>
+        <td>${escapeHtml(c.phone)}</td>
+        <td>${escapeHtml(c.email)}</td>
+        <td>
+          <button class="btn btn-edit btn-sm" data-action="edit-client" data-id="${c.id}">Editar</button>
+          <button class="btn btn-danger btn-sm" data-action="delete-client" data-id="${c.id}">Eliminar</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function resetClientForm() {
+    editingClientId = null;
+    document.getElementById("client-edit-id").value = "";
+    document.getElementById("client-name").value = "";
+    document.getElementById("client-id-field").value = "";
+    document.getElementById("client-phone").value = "";
+    document.getElementById("client-email").value = "";
+    document.getElementById("client-notes").value = "";
+    clearFieldError("client-name", "err-client-name");
+    clearFieldError("client-email", "err-client-email");
+    document.getElementById("btn-save-client").textContent = "Guardar cliente";
+  }
+
+  function showClientForm(client) {
+    resetClientForm();
+    if (client) {
+      editingClientId = client.id;
+      document.getElementById("client-edit-id").value = client.id;
+      document.getElementById("client-name").value = client.name || "";
+      document.getElementById("client-id-field").value = client.idNumber || "";
+      document.getElementById("client-phone").value = client.phone || "";
+      document.getElementById("client-email").value = client.email || "";
+      document.getElementById("client-notes").value = client.notes || "";
+      document.getElementById("btn-save-client").textContent = "Actualizar cliente";
+    }
+    document.getElementById("form-client").classList.remove("hidden");
+  }
+
+  document.getElementById("btn-add-client").addEventListener("click", () => showClientForm(null));
+  document.getElementById("btn-cancel-client").addEventListener("click", () => {
+    document.getElementById("form-client").classList.add("hidden");
+    resetClientForm();
+  });
+  document.getElementById("client-search").addEventListener("input", renderClients);
+
+  function clearFieldError(inputId, errId) {
+    document.getElementById(inputId).classList.remove("field-error");
+    document.getElementById(errId).style.display = "none";
+  }
+  function setFieldError(inputId, errId) {
+    document.getElementById(inputId).classList.add("field-error");
+    document.getElementById(errId).style.display = "block";
+  }
+
+  document.getElementById("form-client").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("client-name").value.trim();
+    const email = document.getElementById("client-email").value.trim();
+    let valid = true;
+    clearFieldError("client-name", "err-client-name");
+    clearFieldError("client-email", "err-client-email");
+    if (!name) { setFieldError("client-name", "err-client-name"); valid = false; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFieldError("client-email", "err-client-email"); valid = false; }
+    if (!valid) return;
+
+    const data = {
+      name,
+      idNumber: document.getElementById("client-id-field").value.trim(),
+      phone: document.getElementById("client-phone").value.trim(),
+      email,
+      notes: document.getElementById("client-notes").value.trim()
+    };
+
+    if (editingClientId) {
+      const c = state.clients.find(c => c.id === editingClientId);
+      if (c) Object.assign(c, data);
+      toast("Cliente actualizado.", "success");
+    } else {
+      data.id = genId();
+      state.clients.push(data);
+      toast("Cliente creado.", "success");
+    }
+    document.getElementById("form-client").classList.add("hidden");
+    resetClientForm();
+    saveState();
+  });
+
+  document.querySelector("#table-clients tbody").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.action === "edit-client") {
+      const c = state.clients.find(c => c.id === id);
+      if (c) showClientForm(c);
+    } else if (btn.dataset.action === "delete-client") {
+      const usedIn = state.invoices.filter(i => i.clientId === id).length;
+      const msg = usedIn
+        ? `Este cliente tiene ${usedIn} factura(s) asociada(s). Si lo eliminas, las facturas mostrarán "(cliente eliminado)". ¿Continuar?`
+        : "¿Eliminar este cliente? Esta acción no se puede deshacer.";
+      openConfirm(msg, () => {
+        state.clients = state.clients.filter(c => c.id !== id);
+        toast("Cliente eliminado.", "success");
+        saveState();
+      });
+    }
+  });
+
+  // ---------- Invoices ----------
+  function populateClientSelect() {
+    const select = document.getElementById("invoice-client");
+    const current = select.value;
+    select.innerHTML = "";
+    if (!state.clients.length) {
+      select.innerHTML = '<option value="">-- Crea un cliente primero --</option>';
+      return;
+    }
+    select.innerHTML = '<option value="">-- Selecciona un cliente --</option>' +
+      state.clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    if (current) select.value = current;
+  }
+
+  function nextInvoiceNumber() {
+    return "F-" + String(state.invoiceCounter).padStart(4, "0");
+  }
+
+  function updateInvoiceTotalPreview() {
+    const amount = Number(document.getElementById("invoice-amount").value) || 0;
+    const tax = Number(document.getElementById("invoice-tax").value) || 0;
+    const total = amount + amount * (tax / 100);
+    document.getElementById("invoice-total-preview").textContent = "Total: " + formatCurrency(total);
+  }
+  document.getElementById("invoice-amount").addEventListener("input", updateInvoiceTotalPreview);
+  document.getElementById("invoice-tax").addEventListener("input", updateInvoiceTotalPreview);
+
+  function renderInvoices() {
+    const tbody = document.querySelector("#table-invoices tbody");
+    const statusFilter = document.getElementById("invoice-filter-status").value;
+    const term = (document.getElementById("invoice-search").value || "").toLowerCase();
+    tbody.innerHTML = "";
+    let filtered = state.invoices.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    if (statusFilter) filtered = filtered.filter(i => effectiveStatus(i) === statusFilter);
+    if (term) filtered = filtered.filter(i =>
+      clientName(i.clientId).toLowerCase().includes(term) || (i.desc || "").toLowerCase().includes(term)
+    );
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No hay facturas que coincidan.</td></tr>';
+      return;
+    }
+    filtered.forEach(inv => {
+      const st = effectiveStatus(inv);
+      const tagClass = st === "paid" ? "tag-paid" : st === "overdue" ? "tag-overdue" : "tag-open";
+      const label = st === "paid" ? "Pagada" : st === "overdue" ? "Vencida" : "Pendiente";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(inv.number || "")}</td>
+        <td>${escapeHtml(clientName(inv.clientId))}</td>
+        <td>${escapeHtml(inv.date)}</td>
+        <td>${escapeHtml(inv.dueDate || "-")}</td>
+        <td>${formatCurrency(inv.amount)}</td>
+        <td>${Number(inv.tax || 0)}%</td>
+        <td>${formatCurrency(invoiceTotal(inv))}</td>
+        <td><span class="tag ${tagClass}">${label}</span></td>
+        <td>
+          <button class="btn btn-edit btn-sm" data-action="edit-invoice" data-id="${inv.id}">Editar</button>
+          ${inv.status !== "paid" ? `<button class="btn btn-sm" data-action="mark-paid" data-id="${inv.id}">Marcar pagada</button>` : ""}
+          <button class="btn btn-danger btn-sm" data-action="delete-invoice" data-id="${inv.id}">Eliminar</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function resetInvoiceForm() {
+    editingInvoiceId = null;
+    document.getElementById("invoice-edit-id").value = "";
+    document.getElementById("invoice-client").value = "";
+    document.getElementById("invoice-date").value = todayISO();
+    document.getElementById("invoice-due-date").value = "";
+    document.getElementById("invoice-status").value = "open";
+    document.getElementById("invoice-amount").value = "";
+    document.getElementById("invoice-tax").value = "13";
+    clearFieldError("invoice-client", "err-invoice-client");
+    clearFieldError("invoice-amount", "err-invoice-amount");
+    updateInvoiceTotalPreview();
+    document.getElementById("invoice-desc").value = "";
+    document.getElementById("btn-save-invoice").textContent = "Guardar factura";
+  }
+
+  function showInvoiceForm(inv) {
+    populateClientSelect();
+    resetInvoiceForm();
+    if (inv) {
+      editingInvoiceId = inv.id;
+      document.getElementById("invoice-edit-id").value = inv.id;
+      document.getElementById("invoice-client").value = inv.clientId;
+      document.getElementById("invoice-date").value = inv.date;
+      document.getElementById("invoice-due-date").value = inv.dueDate || "";
+      document.getElementById("invoice-status").value = inv.status;
+      document.getElementById("invoice-amount").value = inv.amount;
+      document.getElementById("invoice-tax").value = inv.tax;
+      document.getElementById("invoice-desc").value = inv.desc || "";
+      updateInvoiceTotalPreview();
+      document.getElementById("btn-save-invoice").textContent = "Actualizar factura";
+    }
+    document.getElementById("form-invoice").classList.remove("hidden");
+  }
+
+  document.getElementById("btn-add-invoice").addEventListener("click", () => {
+    if (!state.clients.length) { toast("Primero crea al menos un cliente.", "error"); switchView("clients"); showClientForm(null); return; }
+    showInvoiceForm(null);
+  });
+  document.getElementById("btn-cancel-invoice").addEventListener("click", () => {
+    document.getElementById("form-invoice").classList.add("hidden");
+    resetInvoiceForm();
+  });
+  document.getElementById("invoice-filter-status").addEventListener("change", renderInvoices);
+  document.getElementById("invoice-search").addEventListener("input", renderInvoices);
+
+  document.getElementById("form-invoice").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const clientId = document.getElementById("invoice-client").value;
+    const amount = Number(document.getElementById("invoice-amount").value);
+    let valid = true;
+    clearFieldError("invoice-client", "err-invoice-client");
+    clearFieldError("invoice-amount", "err-invoice-amount");
+    if (!clientId) { setFieldError("invoice-client", "err-invoice-client"); valid = false; }
+    if (!amount || amount <= 0) { setFieldError("invoice-amount", "err-invoice-amount"); valid = false; }
+    if (!valid) return;
+
+    const data = {
+      clientId,
+      date: document.getElementById("invoice-date").value || todayISO(),
+      dueDate: document.getElementById("invoice-due-date").value || "",
+      status: document.getElementById("invoice-status").value,
+      amount,
+      tax: Number(document.getElementById("invoice-tax").value) || 0,
+      desc: document.getElementById("invoice-desc").value.trim()
+    };
+
+    if (editingInvoiceId) {
+      const inv = state.invoices.find(i => i.id === editingInvoiceId);
+      if (inv) Object.assign(inv, data);
+      toast("Factura actualizada.", "success");
+    } else {
+      data.id = genId();
+      data.number = nextInvoiceNumber();
+      state.invoiceCounter += 1;
+      state.invoices.push(data);
+      toast("Factura creada.", "success");
+    }
+    document.getElementById("form-invoice").classList.add("hidden");
+    resetInvoiceForm();
+    saveState();
+  });
+
+  document.querySelector("#table-invoices tbody").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    if (action === "edit-invoice") {
+      const inv = state.invoices.find(i => i.id === id);
+      if (inv) showInvoiceForm(inv);
+    } else if (action === "delete-invoice") {
+      openConfirm("¿Eliminar esta factura? Esta acción no se puede deshacer.", () => {
+        state.invoices = state.invoices.filter(i => i.id !== id);
+        toast("Factura eliminada.", "success");
+        saveState();
+      });
+    } else if (action === "mark-paid") {
+      const inv = state.invoices.find(i => i.id === id);
+      if (inv) { inv.status = "paid"; toast("Factura marcada como pagada.", "success"); saveState(); }
+    }
+  });
+
+  // ---------- Expenses ----------
+  function populateCategoryFilter() {
+    const select = document.getElementById("expense-filter-category");
+    const current = select.value;
+    const cats = Array.from(new Set(state.expenses.map(e => e.category).filter(Boolean))).sort();
+    select.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    if (current) select.value = current;
+  }
+
+  function renderExpenses() {
+    const tbody = document.querySelector("#table-expenses tbody");
+    const catFilter = document.getElementById("expense-filter-category").value;
+    const term = (document.getElementById("expense-search").value || "").toLowerCase();
+    tbody.innerHTML = "";
+    let filtered = state.expenses.slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    if (catFilter) filtered = filtered.filter(e => e.category === catFilter);
+    if (term) filtered = filtered.filter(e => (e.vendor || "").toLowerCase().includes(term) || (e.desc || "").toLowerCase().includes(term));
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No hay gastos que coincidan.</td></tr>';
+      return;
+    }
+    filtered.forEach(exp => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(exp.date)}</td>
+        <td>${formatCurrency(exp.amount)}</td>
+        <td>${escapeHtml(exp.category || "-")}</td>
+        <td>${escapeHtml(exp.vendor || "-")}</td>
+        <td>
+          <button class="btn btn-edit btn-sm" data-action="edit-expense" data-id="${exp.id}">Editar</button>
+          <button class="btn btn-danger btn-sm" data-action="delete-expense" data-id="${exp.id}">Eliminar</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function resetExpenseForm() {
+    editingExpenseId = null;
+    document.getElementById("expense-edit-id").value = "";
+    document.getElementById("expense-date").value = todayISO();
+    document.getElementById("expense-amount").value = "";
+    document.getElementById("expense-category").value = "";
+    document.getElementById("expense-vendor").value = "";
+    document.getElementById("expense-desc").value = "";
+    clearFieldError("expense-amount", "err-expense-amount");
+    document.getElementById("btn-save-expense").textContent = "Guardar gasto";
+  }
+
+  function showExpenseForm(exp) {
+    resetExpenseForm();
+    if (exp) {
+      editingExpenseId = exp.id;
+      document.getElementById("expense-edit-id").value = exp.id;
+      document.getElementById("expense-date").value = exp.date;
+      document.getElementById("expense-amount").value = exp.amount;
+      document.getElementById("expense-category").value = exp.category || "";
+      document.getElementById("expense-vendor").value = exp.vendor || "";
+      document.getElementById("expense-desc").value = exp.desc || "";
+      document.getElementById("btn-save-expense").textContent = "Actualizar gasto";
+    }
+    document.getElementById("form-expense").classList.remove("hidden");
+  }
+
+  document.getElementById("btn-add-expense").addEventListener("click", () => showExpenseForm(null));
+  document.getElementById("btn-cancel-expense").addEventListener("click", () => {
+    document.getElementById("form-expense").classList.add("hidden");
+    resetExpenseForm();
+  });
+  document.getElementById("expense-filter-category").addEventListener("change", renderExpenses);
+  document.getElementById("expense-search").addEventListener("input", renderExpenses);
+
+  document.getElementById("form-expense").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const amount = Number(document.getElementById("expense-amount").value);
+    clearFieldError("expense-amount", "err-expense-amount");
+    if (!amount || amount <= 0) { setFieldError("expense-amount", "err-expense-amount"); return; }
+
+    const data = {
+      date: document.getElementById("expense-date").value || todayISO(),
+      amount,
+      category: document.getElementById("expense-category").value.trim(),
+      vendor: document.getElementById("expense-vendor").value.trim(),
+      desc: document.getElementById("expense-desc").value.trim()
+    };
+
+    if (editingExpenseId) {
+      const exp = state.expenses.find(e => e.id === editingExpenseId);
+      if (exp) Object.assign(exp, data);
+      toast("Gasto actualizado.", "success");
+    } else {
+      data.id = genId();
+      state.expenses.push(data);
+      toast("Gasto creado.", "success");
+    }
+    document.getElementById("form-expense").classList.add("hidden");
+    resetExpenseForm();
+    saveState();
+  });
+
+  document.querySelector("#table-expenses tbody").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.action === "edit-expense") {
+      const exp = state.expenses.find(e => e.id === id);
+      if (exp) showExpenseForm(exp);
+    } else if (btn.dataset.action === "delete-expense") {
+      openConfirm("¿Eliminar este gasto? Esta acción no se puede deshacer.", () => {
+        state.expenses = state.expenses.filter(e => e.id !== id);
+        toast("Gasto eliminado.", "success");
+        saveState();
+      });
+    }
+  });
+
+  // ---------- Quick actions from dashboard ----------
+  document.getElementById("btn-quick-invoice").addEventListener("click", () => {
+    switchView("invoices");
+    if (!state.clients.length) { toast("Primero crea al menos un cliente.", "error"); switchView("clients"); showClientForm(null); return; }
+    showInvoiceForm(null);
+  });
+  document.getElementById("btn-quick-expense").addEventListener("click", () => {
+    switchView("expenses");
+    showExpenseForm(null);
+  });
+
+  // ---------- Reports ----------
+  let lastReportRows = { invoices: [], expenses: [] };
+
+  document.getElementById("form-report").addEventListener("submit", (e) => {
+    e.preventDefault();
+    generateReport();
+  });
+  document.getElementById("btn-report-clear").addEventListener("click", () => {
+    document.getElementById("report-from").value = "";
+    document.getElementById("report-to").value = "";
+    generateReport();
+  });
+
+  function generateReport() {
+    const from = document.getElementById("report-from").value;
+    const to = document.getElementById("report-to").value;
+    const invRows = state.invoices.filter(i => (!from || i.date >= from) && (!to || i.date <= to));
+    const expRows = state.expenses.filter(e => (!from || e.date >= from) && (!to || e.date <= to));
+    lastReportRows = { invoices: invRows, expenses: expRows };
+
+    const income = invRows.reduce((s, i) => s + invoiceTotal(i), 0);
+    const expenses = expRows.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const result = income - expenses;
+
+    document.getElementById("report-income").textContent = formatCurrency(income);
+    document.getElementById("report-expenses").textContent = formatCurrency(expenses);
+    document.getElementById("report-result").textContent = formatCurrency(result);
+    const tag = document.getElementById("report-result-tag");
+    if (result > 0) { tag.textContent = "Ganancia"; tag.style.color = "var(--success)"; }
+    else if (result < 0) { tag.textContent = "Pérdida"; tag.style.color = "var(--danger)"; }
+    else { tag.textContent = "Equilibrado"; tag.style.color = "var(--accent)"; }
+
+    const byCat = {};
+    expRows.forEach(e => {
+      const cat = e.category || "Sin categoría";
+      byCat[cat] = (byCat[cat] || 0) + Number(e.amount || 0);
+    });
+    const tbody = document.querySelector("#table-report-categories tbody");
+    tbody.innerHTML = "";
+    const cats = Object.keys(byCat).sort((a, b) => byCat[b] - byCat[a]);
+    if (!cats.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="2">Sin gastos en el rango seleccionado.</td></tr>';
+    } else {
+      cats.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${escapeHtml(c)}</td><td>${formatCurrency(byCat[c])}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  function toCSV(rows, headers) {
+    const escapeCsv = v => {
+      const s = String(v == null ? "" : v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [headers.map(h => escapeCsv(h.label)).join(",")];
+    rows.forEach(r => lines.push(headers.map(h => escapeCsv(h.get(r))).join(",")));
+    return lines.join("\n");
+  }
+
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById("btn-export-csv").addEventListener("click", () => {
+    if (!lastReportRows.invoices.length && !lastReportRows.expenses.length) generateReport();
+    const invCsv = toCSV(lastReportRows.invoices, [
+      { label: "Número", get: r => r.number },
+      { label: "Cliente", get: r => clientName(r.clientId) },
+      { label: "Fecha", get: r => r.date },
+      { label: "Subtotal", get: r => r.amount },
+      { label: "IVA%", get: r => r.tax },
+      { label: "Total", get: r => invoiceTotal(r).toFixed(2) },
+      { label: "Estado", get: r => effectiveStatus(r) }
+    ]);
+    const expCsv = toCSV(lastReportRows.expenses, [
+      { label: "Fecha", get: r => r.date },
+      { label: "Monto", get: r => r.amount },
+      { label: "Categoría", get: r => r.category },
+      { label: "Proveedor", get: r => r.vendor }
+    ]);
+    const combined = "FACTURAS\n" + invCsv + "\n\nGASTOS\n" + expCsv;
+    downloadText("reporte-contabilidad.csv", combined, "text/csv");
+    toast("Reporte CSV exportado.", "success");
+  });
+
+  document.getElementById("btn-print-report").addEventListener("click", () => {
+    if (!lastReportRows.invoices.length && !lastReportRows.expenses.length) generateReport();
+    window.print();
+  });
+
+  document.getElementById("btn-export-json").addEventListener("click", () => {
+    const backup = JSON.stringify(state, null, 2);
+    document.getElementById("export-output").textContent = backup;
+    downloadText("respaldo-contabilidad.json", backup, "application/json");
+    toast("Respaldo JSON exportado.", "success");
+  });
+
+  // ---------- Settings ----------
+  function loadSettingsForm() {
+    document.getElementById("setting-business-name").value = state.settings.businessName || "";
+    document.getElementById("setting-currency").value = state.settings.currency || "₡";
+  }
+
+  document.getElementById("btn-save-settings").addEventListener("click", () => {
+    state.settings.businessName = document.getElementById("setting-business-name").value.trim() || "Mi Negocio";
+    state.settings.currency = document.getElementById("setting-currency").value.trim() || "₡";
+    saveState();
+    toast("Configuración guardada.", "success");
+  });
+
+  document.getElementById("btn-clear-all").addEventListener("click", () => {
+    openConfirm("Esto eliminará TODOS los clientes, facturas y gastos guardados. ¿Deseas continuar?", () => {
+      state.clients = [];
+      state.invoices = [];
+      state.expenses = [];
+      state.invoiceCounter = 1;
+      saveState();
+      toast("Todos los datos fueron eliminados.", "success");
+    });
+  });
+
+  document.getElementById("import-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        openConfirm("Esto reemplazará todos los datos actuales con el contenido del respaldo. ¿Continuar?", () => {
+          ["clients", "invoices", "expenses"].forEach(k => {
+            if (Array.isArray(parsed[k])) state[k] = parsed[k];
+          });
+          if (parsed.settings) state.settings = Object.assign(state.settings, parsed.settings);
+          if (typeof parsed.invoiceCounter === "number") state.invoiceCounter = parsed.invoiceCounter;
+          loadSettingsForm();
+          saveState();
+          toast("Respaldo restaurado correctamente.", "success");
+        });
+      } catch (err) {
+        console.error(err);
+        toast("El archivo seleccionado no es un respaldo JSON válido.", "error");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- Init ----------
+  loadState();
+  document.getElementById("invoice-date").value = todayISO();
+  document.getElementById("expense-date").value = todayISO();
+  loadSettingsForm();
+  renderAll();
+  generateReport();
+})();
+</script>
+</body>
+</html>
